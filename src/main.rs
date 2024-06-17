@@ -3,63 +3,80 @@ use std::io;
 
 use memory_game::{Game, Coord};
 
+fn parse_and_check_bounds(s : &str, lower : usize, upper : usize) -> (bool, usize) {
+    let mut rslt: (bool, usize) = (false, 0);
+    let mut parse_ok = false;
+    let val :usize = match s.trim().parse() {
+        Ok(y) => { parse_ok = true; y },
+        Err(_) => { parse_ok = false; 0 },
+    };
+    if parse_ok && val >= lower && val <= upper {
+        rslt = (true, val);
+    } else {
+        rslt = (false, val);
+    }
+    rslt
+}
+
+fn query_one_coord(coord_counter : usize, upper : usize) -> Coord {
+    let mut the_coord = Coord(0,0);
+    let mut input_ok = false;
+    while ! input_ok {
+        let mut coord_str = String::new();
+        println!("\nMake a guess, for coord {} like so \"3, 5\":", coord_counter);
+        io::stdin()
+            .read_line(&mut coord_str)
+            .expect("Failed to read");
+        let splitted: Vec<&str>= coord_str.split(",").collect();
+        if splitted.len() != 2 {
+            println!("Input not acceptable. try again.");
+        } else {
+            let mut rslt: [(bool, usize); 2] = [(false, 0), (false, 0)];
+            for j in 0..2 {
+                rslt[j] = parse_and_check_bounds(splitted[j], 0, upper);
+            }
+            if rslt[0].0 && rslt[1].0 {
+                the_coord = Coord(rslt[0].1, rslt[1].1);
+                input_ok = true;
+            } else {
+                println!("Input coordinates must be integer number between 0 and 7 (inclusive). Try again.");
+            }
+        }
+    }
+    the_coord
+}
+
 fn main() {
-    println!("Hello, world!");
     let height = 8;
     let width = 8;
     let mut game = Game::new(height, width);
-
+    println!("Welcome to the good olde fashioned memory game!\n");
     println!("Game width {} and height {}", game.field.width, game.field.height);
     let player_hugo = "Hugo".to_string();
     game.add_player(player_hugo);
     println!("Added Player: {}", game.players[0].name);
     println!("Deck has {} cards.", game.deck.len());
-    println!("First card of deck is: {:#?}", & game.deck[0]);
     println!("Setting cards...");
     game.reset();
-    println!("First Card is: {:#?}", & game.deck[0]);
-    let card_id = game.field.field[0][0].unwrap();
-    println!("Card on field[0][0] is: {}", card_id);
-    println!("Card on {} is  {:#?}", card_id, game.deck[card_id]);
-
     while ! game.check_game_over() {
-        let mut coord1_str = String::new();
-        let mut coord2_str = String::new();
-
         game.print_field();
-
-        println!("\nMake a guess, for coord 1 like so \"3, 5\":");
-        io::stdin()
-            .read_line(&mut coord1_str)
-            .expect("Failed to read");
-
-        println!("\nMake a guess, for coord 2 like so \"3, 5\":");
-        io::stdin()
-            .read_line(&mut coord2_str)
-            .expect("Failed to read");
-
-        let splitted: Vec<&str>= coord1_str.split(",").collect();
-        let y1 :usize = splitted[0].trim().parse().unwrap();
-        let x1 :usize = splitted[1].trim().parse().unwrap();
-
-        let splitted: Vec<&str>= coord2_str.split(",").collect();
-        let y2 :usize = splitted[0].trim().parse().unwrap();
-        let x2 :usize = splitted[1].trim().parse().unwrap();
-
-        println!("\nPlayer 0 trying his luck at [{}, {}] and [{}, {}]", y1, x1, y2, x2);
-        let player_id = 0;
-        let coord1 = Coord(y1, x1);
-        let coord2 = Coord(y2, x2);
-        let found_pair = game.check_guess(player_id, &coord1, &coord2);
+        let mut coord_pair = [Coord(0,0), Coord(0,0)];
+        for i in 0..2 {
+            coord_pair[i] = query_one_coord(i, 7);
+        }
+        println!("\nPlayer 0 trying his luck at {} and {}", coord_pair[0], coord_pair[1]);
+        let player_id = game.current_player_id;
+        let found_pair = game.check_guess(player_id, &coord_pair[0], &coord_pair[1]);
         if found_pair {
             println!("You are in luck!");
             game.print_cards_of_player(player_id);
         } else {
             println!("Sorry, that did not work out");
+            for coord in coord_pair {        
+                println!("\nlocation {}: ", coord);
+                game.print_card_at(&coord);
+            }    
         }
-        println!("\nlocation[{}, {}]: ", y1, x1);
-        game.print_card_at(&coord1);
-        println!("location[{}, {}]: ", y2, x2);
-        game.print_card_at(&coord2);
+        game.next_player();
     }
 }

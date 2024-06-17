@@ -1,6 +1,7 @@
 //use std::io;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
+use std::fmt;
 
 pub type CardId = usize;
 
@@ -96,9 +97,16 @@ pub struct Game {
     pub field : Field,
     pub players : Vec<Player>,
     pub deck : Deck,
+    pub current_player_id : usize,
 }
 
 pub struct Coord (pub usize, pub usize);
+
+impl fmt::Display for Coord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
+    }
+}
 
 impl Game {
     pub fn new(height : usize, width : usize) -> Self {
@@ -106,6 +114,7 @@ impl Game {
             field : Field::new(height, width),
             players : Vec::new(),
             deck : create_deck((height * width) / 2),
+            current_player_id : 0,
         }
     }
     pub fn add_player(&mut self, name : String) {
@@ -121,6 +130,7 @@ impl Game {
         for player in &mut self.players {
             player.collected_cards.clear();
         }
+        self.current_player_id = 0;
     }
     pub fn check_guess(& mut self, player : usize, coord1 : &Coord, coord2 : &Coord) -> bool {
         if self.field.field[coord1.0][coord1.1] == None {
@@ -154,6 +164,12 @@ impl Game {
             }
         }
         true
+    }
+    pub fn next_player(&mut self) {
+        self.current_player_id += 1;
+        if self.current_player_id >= self.players.len() {
+            self.current_player_id = 0;
+        }
     }
     pub fn print_card_at(& self, coord : & Coord) {
         if self.field.field[coord.0][coord.1] == None {
