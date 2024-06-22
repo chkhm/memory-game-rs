@@ -33,9 +33,11 @@ connects the input to the Game state and calls the game logic functions accordin
 This struct (was about to call it object or class) collects the events from the event loop and handles them by
 calling the corresponding game logic.
 
+<div hidden>
+
 ```plantuml
 
-@startuml
+@startuml mvc-pattern
 
 skinparam interface {
   backgroundColor RosyBrown
@@ -77,15 +79,20 @@ folder ctrl_fldr {
 
 controller - loop
 
-
-game -d- model 
+game -d- model
 view -r- renderer
 control -d- controller
 
-User --> control 
+User --> control
 controller ..> game : write
 renderer <. controller : "trigger"
 view ..> game : read
 @enduml
 
 ```
+
+</div>
+
+![](mvc-pattern)
+
+This is basically it. The rest is just SDL2 stuff.
