@@ -105,17 +105,20 @@ which is outlined below:
 
 ```mermaid
 stateDiagram
+    state "start game" as start_game
     state "user chooses first card" as first_card
     state "user chooses second card" as second_card
     state "user views result" as view_result
     state "next user" as next_user
     state "game over" as game_over
 
-    [*] --> first_card
+    [*] --> start_game
+    start_game --> first_card: any click
     first_card --> second_card: card click
     second_card --> view_result: card click
-    view_result --> next_user: any click game not yet over/
+    view_result --> next_user: any click game not yet over
     view_result --> game_over: any click and game over
-    game_over --> [*]
+    game_over --> [*]: Close Window
+    game_over --> start_game: any click
     next_user --> first_card: any click
 ```
