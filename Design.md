@@ -93,6 +93,25 @@ view ..> game : read
 
 </div>
 
-![](mvc-pattern)
+![Model View Controller Pattern](mvc-pattern.svg)
 
-This is basically it. The rest is just SDL2 stuff.
+Both View and Model are easy to understand. The Model consists of some
+structs that represent the domain of the game (cards, players, field, etc.).
+The View simply renders the objects of the Model to the screen. This is
+basically it. The rest is just SDL2 stuff.
+
+The Controller is slightly more complex because it realizes a state machine
+which is outlined below:
+
+```mermaid
+stateDiagram
+    state "user chooses first card" as first_card
+    state "user chooses second card" as second_card
+    state "user views result" as view_result
+
+    [*] --> first_card
+    first_card --> second_card: card click
+    second_card --> view_result: card click
+    view_result --> [*]
+```
+
