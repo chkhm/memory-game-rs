@@ -1,7 +1,15 @@
 
 use std::io;
 
+use sdl2::{rect::Rect, sys::SDL_QuitEvent};
+use sdl2::pixels::Color;
+use sdl2::event::Event;
+use sdl2::video::WindowBuilder;
+
 use memory_game::{Game, Coord};
+
+mod view;
+use view::board_view;
 
 fn parse_and_check_bounds(s : &str, lower : usize, upper : usize) -> (bool, usize) {
     let mut rslt: (bool, usize) = (false, 0);
@@ -46,7 +54,46 @@ fn query_one_coord(coord_counter : usize, upper : usize) -> Coord {
     the_coord
 }
 
-fn main() {
+
+
+
+fn main() -> Result<(), String> {
+
+    let screen_width = 600;
+    let screen_height = 800;
+
+    let sdl_context = sdl2::init()?;
+    let video_subsystem = sdl_context.video()?;
+    let window = video_subsystem.window("Rusty!", screen_width, screen_height)
+        .build()
+        .unwrap();
+
+    let mut canvas = window.into_canvas()
+        .build()
+        .unwrap();
+
+    let board_view = board_view::Renderer {
+        screen_area : Rect::new(0, 0, screen_width, screen_height),
+        clear_color : Color::RGB(64, 192, 255),
+    };
+
+    let mut running = true;
+    let mut event_queue = sdl_context.event_pump().unwrap();
+
+    while running {
+        for event in event_queue.poll_iter() {
+            match event {
+                Event::Quit { timestamp } => { running = false; },
+                Event::MouseMotion { timestamp, window_id, which, mousestate, x, y, xrel, yrel } => {
+                    println!("Mouse x: {}, y: {} \t x-rel: {}, y-rel: {}", x, y, xrel, yrel);
+                },
+                _ => {}
+            }
+        }
+        board_view.render(&mut canvas);
+        canvas.present();
+    }
+
     let height = 8;
     let width = 8;
     let mut game = Game::new(height, width);
@@ -58,7 +105,7 @@ fn main() {
     println!("Deck has {} cards.", game.deck.len());
     println!("Setting cards...");
     game.reset();
-    while ! game.check_game_over() {
+    while ! game.check_game_over() && false {
         game.print_field();
         let mut coord_pair = [Coord(0,0), Coord(0,0)];
         for i in 0..2 {
@@ -79,4 +126,6 @@ fn main() {
         }
         game.next_player();
     }
+    
+    Ok(())
 }
