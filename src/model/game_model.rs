@@ -210,3 +210,29 @@ impl Game {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{create_deck, shuffle_deck};
+    #[test]
+    fn test_create_deck() {
+        let deck = create_deck(32);
+        assert_eq!(deck.len(), 64);
+        for i in 0..32  {
+            assert_eq!(deck[2*i].id, 2*i);
+            assert_eq!(deck[2*i].card_type, i);
+            assert_eq!(deck[2*i].title, i.to_string());
+            assert_eq!(deck[2*i+1].id, 2*i+1);
+            assert_eq!(deck[2*i+1].card_type, i);
+            assert_eq!(deck[2*i+1].title, i.to_string());
+        }
+    }
+    #[test]
+    fn test_shuffle_deck() {
+        let deck = create_deck(32);
+        let shuffle = shuffle_deck(&deck);
+        assert_eq!(shuffle.len(), 64);
+        // we should now test that all numbers between 0 and 31 are in it twice, maybe also check randomness in some way
+        // but too much work
+    }
+}

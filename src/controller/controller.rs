@@ -94,7 +94,7 @@ impl Control {
                                 let row : u32 = (y_minus_padding) / card_height_plus_padding;
                                 let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
                                 self.game.open_card(&coord);
-                                println!("Card Opened at ({}, {}", coord.0, coord.1);
+                                println!("Card Opened at ({}, {})", coord.0, coord.1);
                             }
                         }
                     }
