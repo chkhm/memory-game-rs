@@ -63,7 +63,7 @@ impl Renderer {
                 let x: i32 = (padding+col*(card_width + padding)).try_into().unwrap();
                 let y: i32= (padding+row*(card_height+padding)).try_into().unwrap();
                 let r = Rect::new(x, y, card_width, card_height);
-                canvas.draw_rect(r);
+                canvas.draw_rect(r).expect("Error on Drawing Rectangle on canvas");
                 let texture_creator = canvas.texture_creator();
                 // Load a font
                 let mut font = ttf_context.load_font(font_path, 24).unwrap();
@@ -84,7 +84,7 @@ impl Renderer {
                 let TextureQuery { width, height, .. } = texture.query();
 
                 // If the example text is too big for the screen, downscale it (and center irregardless)
-                let padding = 64;
+                // let padding = 64;
                 let mut target = get_centered_rect(
                     width,
                     height,

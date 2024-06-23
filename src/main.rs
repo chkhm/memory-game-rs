@@ -1,11 +1,6 @@
 
 use std::io;
 
-use sdl2::{rect::Rect, sys::SDL_QuitEvent};
-use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::video::WindowBuilder;
-
 mod model;
 use model::game_model::{Game, Coord};
 
@@ -13,21 +8,22 @@ mod controller;
 use controller::controller::Control;
 
 mod view;
-use view::board_view;
+// use view::board_view;
 
 fn parse_and_check_bounds(s : &str, lower : usize, upper : usize) -> (bool, usize) {
-    let mut rslt: (bool, usize) = (false, 0);
-    let mut parse_ok = false;
+    // let mut rslt: (bool, usize) = (false, 0);
+    let parse_ok : bool ;
     let val :usize = match s.trim().parse() {
         Ok(y) => { parse_ok = true; y },
         Err(_) => { parse_ok = false; 0 },
     };
     if parse_ok && val >= lower && val <= upper {
-        rslt = (true, val);
+        let rslt = (true, val);
+        return rslt
     } else {
-        rslt = (false, val);
+        let rslt = (false, val);
+        return rslt
     }
-    rslt
 }
 
 fn query_one_coord(coord_counter : usize, upper : usize) -> Coord {
@@ -68,7 +64,7 @@ fn main() -> Result<(), String> {
     let mut control = Control::new(height, width);
     control.reset();
     control.run();
-    
+
 
     let mut game = Game::new(height, width);
     println!("Welcome to the good olde fashioned memory game!\n");

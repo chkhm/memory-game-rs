@@ -2,12 +2,12 @@
 use crate::model::game_model::{Coord, Game};
 use crate::view::board_view;
 
-use sdl2::libc::winsize;
+// use sdl2::libc::winsize;
 use sdl2::mouse::MouseButton;
-use sdl2::{rect::Rect, sys::SDL_QuitEvent};
+use sdl2::rect::Rect; //, sys::SDL_QuitEvent};
 use sdl2::pixels::Color;
 use sdl2::event::Event;
-use sdl2::video::WindowBuilder;
+// use sdl2::video::WindowBuilder;
 
 
 pub enum ControlState {
@@ -64,11 +64,11 @@ impl Control {
         while running {
             for event in event_queue.poll_iter() {
                 match event {
-                    Event::Quit { timestamp } => { running = false; },
-                    Event::MouseMotion { timestamp, window_id, which, mousestate, x, y, xrel, yrel } => {
+                    Event::Quit { timestamp: _ } => { running = false; },
+                    Event::MouseMotion { timestamp: _, window_id: _, which: _, mousestate: _, x, y, xrel, yrel } => {
                         println!("Mouse x: {}, y: {} \t x-rel: {}, y-rel: {}", x, y, xrel, yrel);
                     },
-                    Event::MouseButtonDown { timestamp, window_id, which, mouse_btn, clicks, x, y } => {
+                    Event::MouseButtonDown { timestamp: _, window_id, which: _, mouse_btn, clicks: _, x, y } => {
                         if window_id == game_window_id && mouse_btn == MouseButton::Left {
                             let padding: i32  = 5;
                             let screen_height_i32: i32 = screen_height.try_into().unwrap();
@@ -101,9 +101,7 @@ impl Control {
                     _ => {}
                 }
             }
-
-            let mouse_state = event_queue.mouse_state();
-
+            // let mouse_state = event_queue.mouse_state();
 
             board_view.render(&mut canvas);
             canvas.present();
