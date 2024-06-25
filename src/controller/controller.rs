@@ -103,7 +103,7 @@ impl Control {
             }
             // let mouse_state = event_queue.mouse_state();
 
-            board_view.render(&mut canvas);
+            board_view.render(&mut canvas, &self.game);
             canvas.present();
         }    
     }

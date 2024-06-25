@@ -67,6 +67,12 @@ impl Field {
             field
         }
     }
+    pub fn card_idx(& self, y : usize, x : usize) -> Option<usize> {
+        if y >= self.height || x >= self.width {
+            panic!("illegal coordinates ({}, {})", y, x);
+        } 
+        self.field[y][x]
+    }
     pub fn clear_field(&mut self, ) {
         for row in 0..self.height {
             for col in 0..self.width {
@@ -99,10 +105,13 @@ pub struct Game {
     pub players : Vec<Player>,
     pub deck : Deck,
     pub current_player_id : usize,
-    pub clicked_card : Option<Coord>,
+    pub num_clicked : usize,
+    pub clicked_card1 : Coord,
+    pub clicked_card2 : Coord,
 }
 
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub struct Coord (pub usize, pub usize);
 
 
@@ -119,7 +128,9 @@ impl Game {
             players : Vec::new(),
             deck : create_deck((height * width) / 2),
             current_player_id : 0,
-            clicked_card : None,
+            num_clicked : 0,
+            clicked_card1 : Coord(0, 0),
+            clicked_card2 : Coord(0, 0),
         }
     }
     pub fn add_player(&mut self, name : String) {
@@ -137,8 +148,44 @@ impl Game {
         }
         self.current_player_id = 0;
     }
-    pub fn open_card(&mut self, coord : &Coord) {
-        self.clicked_card = Some(coord.clone());
+    pub fn card_at(&self, y : usize, x : usize) -> Option<&Card> {
+        match self.field.card_idx(y, x) {
+            Some(card_idx) => { Some(&self.deck[card_idx]) },
+            None => { None },
+        }
+    }
+    pub fn is_clicked(&self, coord : & Coord) -> bool {
+        if self.num_clicked == 0 {
+            return false;
+        }
+        if *coord == self.clicked_card1 {
+            return true;
+        }
+        if self.num_clicked > 1 && self.clicked_card2 == *coord {
+            return true;
+        }
+        false
+    }
+    pub fn coord_has_card(&self, coord : &Coord) -> bool {
+        let result = match self.card_at(coord.0, coord.1) {
+            Some(_) => { true },
+            None => { false },
+        };
+        result
+    }
+    pub fn open_card(&mut self, coord : &Coord) { 
+        if ! self.coord_has_card(coord) {
+            return;
+        }
+        if self.num_clicked == 0 {
+            self.clicked_card1 = coord.clone();
+            self.num_clicked = 1;
+        } else if self.num_clicked == 1 {
+            if *coord != self.clicked_card1 {
+                self.clicked_card2 = coord.clone();
+                self.num_clicked = 2;
+            }
+        }
     }
     pub fn check_guess(& mut self, player : usize, coord1 : &Coord, coord2 : &Coord) -> bool {
         if self.field.field[coord1.0][coord1.1] == None {
