@@ -54,9 +54,6 @@ fn query_one_coord(coord_counter : usize, upper : usize) -> Coord {
     the_coord
 }
 
-
-
-
 fn main() -> Result<(), String> {
 
     let height = 8;
@@ -64,7 +61,6 @@ fn main() -> Result<(), String> {
     let mut control = Control::new(height, width);
     control.reset();
     control.run();
-
 
     let mut game = Game::new(height, width);
     println!("Welcome to the good olde fashioned memory game!\n");

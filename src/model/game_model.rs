@@ -173,19 +173,22 @@ impl Game {
         };
         result
     }
-    pub fn open_card(&mut self, coord : &Coord) { 
+    pub fn open_card(&mut self, coord : &Coord) -> bool { 
         if ! self.coord_has_card(coord) {
-            return;
+            return false;
         }
         if self.num_clicked == 0 {
             self.clicked_card1 = coord.clone();
             self.num_clicked = 1;
+            return true;
         } else if self.num_clicked == 1 {
             if *coord != self.clicked_card1 {
                 self.clicked_card2 = coord.clone();
                 self.num_clicked = 2;
+                return true;
             }
         }
+        false
     }
     pub fn check_guess(& mut self, player : usize, coord1 : &Coord, coord2 : &Coord) -> bool {
         if self.field.field[coord1.0][coord1.1] == None {
