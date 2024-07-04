@@ -55,7 +55,6 @@ fn query_one_coord(coord_counter : usize, upper : usize) -> Coord {
 }
 
 fn main() -> Result<(), String> {
-
     let height = 8;
     let width = 8;
     let mut control = Control::new(height, width);

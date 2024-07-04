@@ -37,6 +37,52 @@ impl Control {
         self.game.reset();
     }
     
+    fn handle_mouse_click(&mut self, y : i32, x : i32, screen_height : u32, screen_width : u32) {
+        if self.state == ControlState::StartGame {
+            self.state = ControlState::FirstCard;
+            println!("first user, your first move");
+            return;
+        }
+        if self.state == ControlState::ViewResult {
+            self.state = ControlState::NextUser;
+            self.game.check_guess(player, coord1, coord2);
+            self.game.close_selected_cards();
+            println!("Next user, click anywhere to continue");
+            return;
+        }
+        if self.state == ControlState::NextUser {
+            self.state = ControlState::FirstCard;
+            println!("Next user, make your first move");
+            return;
+        }
+        let padding: i32  = 5;
+        let screen_height_i32: i32 = screen_height.try_into().unwrap();
+        let screen_width_i32: i32 = screen_width.try_into().unwrap();
+        let y_max : i32 = screen_height_i32 - padding;
+        let x_max : i32 = screen_width_i32 - padding;
+
+        if y > padding || y < y_max || x > padding || x < x_max {
+            let card_width_plus_padding : u32 = screen_width / 8;
+            let card_height_plus_padding : u32 = screen_height / 8;
+            let x_minus_padding : u32 = (x - padding).try_into().unwrap();
+            let y_minus_padding : u32 = (y - padding).try_into().unwrap();
+            let col : u32 = (x_minus_padding) / card_width_plus_padding;
+            let row : u32 = (y_minus_padding) / card_height_plus_padding;
+            let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
+            let card_opened = self.game.open_card(&coord);
+            if card_opened {
+                println!("Card Opened at ({}, {})", coord.0, coord.1);
+                if self.state == ControlState::FirstCard {
+                    self.state = ControlState::SecondCard;
+                    println!("Choose second card");
+                } else if self.state == ControlState::SecondCard {
+                    self.state = ControlState::ViewResult;
+                    println!("Check you result");
+                }
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         let screen_width : u32 = 600;
         let screen_height: u32 = 800;
@@ -65,70 +111,17 @@ impl Control {
             for event in event_queue.poll_iter() {
                 match event {
                     Event::Quit { timestamp: _ } => { running = false; },
-                    Event::MouseMotion { timestamp: _, window_id: _, which: _, mousestate: _, x, y, xrel, yrel } => {
-                        println!("Mouse x: {}, y: {} \t x-rel: {}, y-rel: {}", x, y, xrel, yrel);
-                    },
+                    // Event::MouseMotion { timestamp: _, window_id: _, which: _, mousestate: _, x, y, xrel, yrel } => {
+                    //     println!("Mouse x: {}, y: {} \t x-rel: {}, y-rel: {}", x, y, xrel, yrel);
+                    // },
                     Event::MouseButtonDown { timestamp: _, window_id, which: _, mouse_btn, clicks: _, x, y } => {
                         if window_id == game_window_id && mouse_btn == MouseButton::Left {
-
-                            if self.state == ControlState::StartGame {
-                                self.state = ControlState::FirstCard;
-                                println!("first user, your first move");
-                                continue;
-                            }
-                            if self.state == ControlState::ViewResult {
-                                self.state = ControlState::NextUser;
-                                println!("Next user, click anywhere to continue");
-                                continue;
-                            }
-                            if self.state == ControlState::NextUser {
-                                self.state = ControlState::FirstCard;
-                                println!("Next user, make your first move");
-                            }
-
-
-                            let padding: i32  = 5;
-                            let screen_height_i32: i32 = screen_height.try_into().unwrap();
-                            let screen_width_i32: i32 = screen_width.try_into().unwrap();
-                            let y_max : i32 = screen_height_i32 - padding;
-                            let x_max : i32 = screen_width_i32 - padding;
-
-                            if y > padding || y < y_max || x > padding || x < x_max {
-                                //let t1 : i32 = screen_width_i32 / 8;
-                                //let t2 : i32 = padding*8/6;
-                                //let card_width: i32 = t1 - t2;
-                                //let t1 : i32 = screen_height_i32 / 8;
-                                //let t2 : i32 = padding*8/6;
-                                //let card_height: i32= t1 - t2;
-                                //let row : i32 = (y - padding) / card_height;
-                                //let col : i32 = (x - padding) /card_width;
-
-                                let card_width_plus_padding : u32 = screen_width / 8;
-                                let card_height_plus_padding : u32 = screen_height / 8;
-                                let x_minus_padding : u32 = (x - padding).try_into().unwrap();
-                                let y_minus_padding : u32 = (y - padding).try_into().unwrap();
-                                let col : u32 = (x_minus_padding) / card_width_plus_padding;
-                                let row : u32 = (y_minus_padding) / card_height_plus_padding;
-                                let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
-                                let card_opened = self.game.open_card(&coord);
-                                if card_opened {
-                                    println!("Card Opened at ({}, {})", coord.0, coord.1);
-                                    if self.state == ControlState::FirstCard {
-                                        self.state = ControlState::SecondCard;
-                                        println!("Choose second card");
-                                    } else if self.state == ControlState::SecondCard {
-                                        self.state = ControlState::ViewResult;
-                                        println!("Check you result");
-                                    }
-                                }
-                            }
+                            self.handle_mouse_click(y, x, screen_height, screen_width);
                         }
                     }
                     _ => {}
                 }
             }
-            // let mouse_state = event_queue.mouse_state();
-
             board_view.render(&mut canvas, &self.game);
             canvas.present();
         }    

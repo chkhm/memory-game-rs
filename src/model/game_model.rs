@@ -173,6 +173,9 @@ impl Game {
         };
         result
     }
+    pub fn close_selected_cards(&mut self) {
+        self.num_clicked = 0;
+    }
     pub fn open_card(&mut self, coord : &Coord) -> bool { 
         if ! self.coord_has_card(coord) {
             return false;
