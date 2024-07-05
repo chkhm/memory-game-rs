@@ -6,6 +6,7 @@ use std::fmt;
 
 pub type CardId = usize;
 
+#[derive(Clone)]
 pub struct Player {
     pub name : String,
     pub collected_cards : Vec<CardId>,
@@ -140,7 +141,7 @@ impl fmt::Display for Coord {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum GameState {
     StartGame,
     StartSelectCards,
@@ -165,12 +166,20 @@ impl Game {
         }
     }
 
+    pub fn game_state(& self) -> GameState {
+        self.state.clone()
+    }
+
     pub fn add_player(&mut self, name : String) {
         let p = Player {
             name,
             collected_cards : Vec::new(),
         };
         self.players.push(p);
+    }
+
+    pub fn current_player(& self) -> Player {
+        self.players[self.current_player_id].clone()
     }
 
     pub fn reset(&mut self) {
@@ -271,18 +280,24 @@ impl Game {
         false
     }
 
-    pub fn check_game_over(& self) -> bool {
+    pub fn check_game_over(&mut self) -> bool {
+        if self.state == GameState::GameOver {
+            return true;
+        }
         for row in 0..self.field.height {
             for col in 0..self.field.width {
                 if self.field.field[row][col] != None {
+                    self.state = GameState::NextUser;
                     return false;
                 }
             }
         }
+        self.state = GameState::GameOver;
         true
     }
 
     pub fn next_player(&mut self) {
+        self.state = GameState::StartSelectCards;
         self.current_player_id += 1;
         if self.current_player_id >= self.players.len() {
             self.current_player_id = 0;

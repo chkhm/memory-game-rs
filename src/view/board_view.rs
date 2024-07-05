@@ -50,12 +50,6 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
 }
 
 fn render_status_box(canvas : &mut Canvas<Window>, y : i32, x : i32, height : u32, width : u32, game : & Game, game_state : GameState) {
-    StartGame,
-    FirstCard,
-    SecondCard,
-    ViewResult,
-    NextUser,
-    GameOver,
 
 }
 

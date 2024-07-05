@@ -22,6 +22,16 @@ I originally planned to build with gtk but changed my mind and went for the much
 
 ## How to build
 
+You need to download the open source fonts that I'm using. No idea if it wouldbe legal for me to put them into this repository. Anyway, you can get them like this:
+
+```bash
+cd python
+mkdir fonts
+cd fonts
+wget -O open-sans.zip https://www.fontsquirrel.com/fonts/download/open-sans
+rm open-sans.zip
+```
+
 Just clone the project and build with cargo:
 
 ```bash

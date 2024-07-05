@@ -1,5 +1,5 @@
 
-use crate::model::game_model::{Coord, Game};
+use crate::model::game_model::{Coord, Game, GameState};
 use crate::view::board_view;
 
 // use sdl2::libc::winsize;
@@ -13,6 +13,28 @@ pub struct Control {
     pub game : Game,
 }
 
+fn calculate_card_coord_from_mouse_click(y : i32, x : i32, screen_height : u32, screen_width : u32) -> Option<Coord> {
+    let padding: i32  = 5;
+    let screen_height_i32: i32 = screen_height.try_into().unwrap();
+    let screen_width_i32: i32 = screen_width.try_into().unwrap();
+    let y_max : i32 = screen_height_i32 - padding;
+    let x_max : i32 = screen_width_i32 - padding;
+
+    if y > padding || y < y_max || x > padding || x < x_max {
+        let card_width_plus_padding : u32 = screen_width / 8;
+        let card_height_plus_padding : u32 = screen_height / 8;
+        let x_minus_padding : u32 = (x - padding).try_into().unwrap();
+        let y_minus_padding : u32 = (y - padding).try_into().unwrap();
+        let col : u32 = (x_minus_padding) / card_width_plus_padding;
+        let row : u32 = (y_minus_padding) / card_height_plus_padding;
+        let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
+        return Some(coord);
+    }
+    None
+}
+
+
+
 impl Control {
     pub fn new(height : usize, width : usize) -> Control {
         Control {
@@ -25,52 +47,88 @@ impl Control {
     }
     
     fn handle_mouse_click(&mut self, y : i32, x : i32, screen_height : u32, screen_width : u32) {
-        if self.game.state == GameState::StartGame {
-            self.state = GameState::FirstCard;
-            println!("first user, your first move");
-            return;
-        }
-        if self.state == GameState::ViewResult {
-            self.state = GameState::NextUser;
-            let found_pair = self.game.check_guess_current_player();
-            if found_pair {
-                println!("Found a pair, you now have cards");
-                self.game.print_cards_of_current_player();
-            }
-            self.game.close_selected_cards();
-            println!("Next user, click anywhere to continue");
-            return;
-        }
-        if self.state == GameState::NextUser {
-            self.state = GameState::FirstCard;
-            println!("Next user, make your first move");
-            return;
-        }
-        let padding: i32  = 5;
-        let screen_height_i32: i32 = screen_height.try_into().unwrap();
-        let screen_width_i32: i32 = screen_width.try_into().unwrap();
-        let y_max : i32 = screen_height_i32 - padding;
-        let x_max : i32 = screen_width_i32 - padding;
+        let state = self.game.game_state();
 
-        if y > padding || y < y_max || x > padding || x < x_max {
-            let card_width_plus_padding : u32 = screen_width / 8;
-            let card_height_plus_padding : u32 = screen_height / 8;
-            let x_minus_padding : u32 = (x - padding).try_into().unwrap();
-            let y_minus_padding : u32 = (y - padding).try_into().unwrap();
-            let col : u32 = (x_minus_padding) / card_width_plus_padding;
-            let row : u32 = (y_minus_padding) / card_height_plus_padding;
-            let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
-            let card_opened = self.game.open_card(&coord);
-            if card_opened {
-                println!("Card Opened at ({}, {})", coord.0, coord.1);
-                if self.state == GameState::FirstCard {
-                    self.state = GameState::SecondCard;
-                    println!("Choose second card");
-                } else if self.state == GameState::SecondCard {
-                    self.state = GameState::ViewResult;
-                    println!("Check you result");
-                }
+        if state == GameState::GameOver {
+            print!("Game over. Resetting ... ");
+            self.game.reset(); // state == StartSelectCards
+            println!("done.");
+            let p = self.game.current_player();
+            println!("Player {}, select your first card", p.name);
+            return;
+        }
+
+        if state == GameState::StartSelectCards || state == GameState::StartGame {
+            let p = self.game.current_player();
+            let c = calculate_card_coord_from_mouse_click(y, x, screen_height, screen_width);
+            if c.is_none() {
+                println!("Player {}, select your first card", p.name);
+                return;
             }
+            let c = c.unwrap();
+            let card_opened = self.game.open_card(&c); // state is FirstCard if success
+            if card_opened {
+                println!("Card Opened at ({}, {})", c.0, c.1);
+                println!("Player {}, select your second card", p.name);
+                return;
+            }
+            println!("No card opened.");
+            println!("Player {}, select your first card", p.name);
+            return ;
+        }
+
+        if state == GameState::FirstCard {
+            let p = self.game.current_player();
+            let c = calculate_card_coord_from_mouse_click(y, x, screen_height, screen_width);
+            if c.is_none() {
+                println!("Player {}, select your second card", p.name);
+                return;
+            }
+            let c = c.unwrap();
+            let card_opened = self.game.open_card(&c); // state is SecondCard if success
+            if card_opened {
+                println!("Card Opened at ({}, {})", c.0, c.1);
+                println!("Player {}, check the result", p.name);
+                return;
+            }
+            println!("No card opened.");
+            println!("Player {}, select your second card", p.name);
+            return ;
+        }
+
+        if state == GameState::SecondCard {
+            let p = self.game.current_player();
+            let found_pair = self.game.check_guess_current_player(); // state is now ViewResult
+            if found_pair {
+                println!("Player {}, you found a pair, you now have cards", p.name);
+                self.game.print_cards_of_current_player();
+            } else {
+                println!("Player {}, bad luck, no pair found", p.name);
+            }
+            println!("Player {}, click to pass on to next player.", p.name);
+            return;
+        }
+
+        if state == GameState::ViewResult {
+            let p = self.game.current_player();
+            let game_over = self.game.check_game_over(); // result is now either GameOver or NextUser
+            if game_over {
+                println!("Player {}, Game is over. Press any key to start new game.", p.name);
+            } else {
+                self.game.close_selected_cards();
+                self.game.next_player();
+                let p = self.game.current_player();
+                println!("Player {}, your turn!", p.name);
+            }
+            return ;
+        }
+
+        if state == GameState::NextUser {
+            println!("Warning! We should never reach this state!");
+            self.game.next_player();
+            let p = self.game.current_player();
+            println!("Player {}, click to start your selection", p.name);
+            return ;
         }
     }
 
