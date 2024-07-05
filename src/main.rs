@@ -59,6 +59,8 @@ fn main() -> Result<(), String> {
     let width = 8;
     let mut control = Control::new(height, width);
     control.reset();
+    let player_hugo = "Hugo".to_string();
+    control.game.add_player(player_hugo);
     control.run();
 
     let mut game = Game::new(height, width);

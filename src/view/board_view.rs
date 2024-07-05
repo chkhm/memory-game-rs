@@ -5,7 +5,7 @@ use sdl2::render::TextureQuery;
 use sdl2::video::Window;
 
 use crate::model::game_model::Coord;
-use crate::model::game_model::{Game, Card};
+use crate::model::game_model::{Game, Card, GameState};
 
 
 pub struct Renderer {
@@ -48,6 +48,18 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
     let cy = t1 - t2;
     rect!(cx, cy, w, h)
 }
+
+fn render_status_box(canvas : &mut Canvas<Window>, y : i32, x : i32, height : u32, width : u32, game : & Game, game_state : GameState) {
+    StartGame,
+    FirstCard,
+    SecondCard,
+    ViewResult,
+    NextUser,
+    GameOver,
+
+}
+
+
 
 impl Renderer {
     fn render_card(&self, canvas : &mut Canvas<Window>, card : &Card, y : i32, x : i32, card_height : u32 , card_width : u32) {

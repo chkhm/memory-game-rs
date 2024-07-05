@@ -100,7 +100,26 @@ impl Field {
     }
 }
 
+/// Holds the core data of the game.
+/// 
+/// This is the expected sequence of function calls to make the Game iterate through it's states:
+/// 
+/// new() --> state = GameOver
+/// add_player()
+/// add_player()
+/// ...
+/// reset() --> state = StartGame
+/// open_card() --> state = FirstCard
+/// open_card() --> state = SecondCard
+/// check_guess_current_player() --> state = ViewResult
+/// check_gameover() --> state = NextUser
+/// next_player() --> state = StartSelectCaards
+/// open_card() -- state = FirstCard
+/// ...
+/// check_gameover() -- state = GameOver
+/// reset() --> state = StartGame
 pub struct Game {
+    pub state : GameState,
     pub field : Field,
     pub players : Vec<Player>,
     pub deck : Deck,
@@ -121,9 +140,21 @@ impl fmt::Display for Coord {
     }
 }
 
+#[derive(PartialEq)]
+pub enum GameState {
+    StartGame,
+    StartSelectCards,
+    FirstCard,
+    SecondCard,
+    ViewResult,
+    NextUser,
+    GameOver,
+}
+
 impl Game {
     pub fn new(height : usize, width : usize) -> Self {
         Self {
+            state : GameState::GameOver,
             field : Field::new(height, width),
             players : Vec::new(),
             deck : create_deck((height * width) / 2),
@@ -133,6 +164,7 @@ impl Game {
             clicked_card2 : Coord(0, 0),
         }
     }
+
     pub fn add_player(&mut self, name : String) {
         let p = Player {
             name,
@@ -140,7 +172,9 @@ impl Game {
         };
         self.players.push(p);
     }
+
     pub fn reset(&mut self) {
+        self.state = GameState::StartGame;
         self.field.clear_field();
         self.field.place_deck(&self.deck);
         for player in &mut self.players {
@@ -148,12 +182,14 @@ impl Game {
         }
         self.current_player_id = 0;
     }
+
     pub fn card_at(&self, y : usize, x : usize) -> Option<&Card> {
         match self.field.card_idx(y, x) {
             Some(card_idx) => { Some(&self.deck[card_idx]) },
             None => { None },
         }
     }
+
     pub fn is_clicked(&self, coord : & Coord) -> bool {
         if self.num_clicked == 0 {
             return false;
@@ -166,6 +202,7 @@ impl Game {
         }
         false
     }
+
     pub fn coord_has_card(&self, coord : &Coord) -> bool {
         let result = match self.card_at(coord.0, coord.1) {
             Some(_) => { true },
@@ -173,9 +210,11 @@ impl Game {
         };
         result
     }
+
     pub fn close_selected_cards(&mut self) {
         self.num_clicked = 0;
     }
+
     pub fn open_card(&mut self, coord : &Coord) -> bool { 
         if ! self.coord_has_card(coord) {
             return false;
@@ -183,16 +222,28 @@ impl Game {
         if self.num_clicked == 0 {
             self.clicked_card1 = coord.clone();
             self.num_clicked = 1;
+            self.state = GameState::FirstCard;
             return true;
         } else if self.num_clicked == 1 {
             if *coord != self.clicked_card1 {
                 self.clicked_card2 = coord.clone();
                 self.num_clicked = 2;
+                self.state = GameState::SecondCard;
                 return true;
             }
         }
         false
     }
+
+    pub fn check_guess_current_player(&mut self) -> bool {
+        // copying the parameters is just borrow checker bs
+        // could probably be avoided with some lifetime crap ...
+        let p = self.current_player_id;
+        let c1 = self.clicked_card1.clone();
+        let c2 = self.clicked_card2.clone();
+        self.check_guess(p, &c1, &c2)
+    }
+
     pub fn check_guess(& mut self, player : usize, coord1 : &Coord, coord2 : &Coord) -> bool {
         if self.field.field[coord1.0][coord1.1] == None {
             println!("coord1 card already taken");
@@ -202,6 +253,9 @@ impl Game {
             println!("coord2 card already taken");
             return false;
         }
+
+        self.state = GameState::ViewResult;
+
         let card_id1 = self.field.field[coord1.0][coord1.1].unwrap();
         let card_id2 = self.field.field[coord2.0][coord2.1].unwrap();
         let col_cards = &mut self.players[player].collected_cards;
@@ -216,6 +270,7 @@ impl Game {
         }
         false
     }
+
     pub fn check_game_over(& self) -> bool {
         for row in 0..self.field.height {
             for col in 0..self.field.width {
@@ -226,12 +281,14 @@ impl Game {
         }
         true
     }
+
     pub fn next_player(&mut self) {
         self.current_player_id += 1;
         if self.current_player_id >= self.players.len() {
             self.current_player_id = 0;
         }
     }
+
     pub fn print_card_at(& self, coord : & Coord) {
         if self.field.field[coord.0][coord.1] == None {
             println!("<<no card>>");
@@ -240,6 +297,7 @@ impl Game {
             println!("{:#?}", self.deck[card_id]);
         }
     }
+
     pub fn print_field(& self) {
         for row in 0..self.field.height {
             for col in 0..self.field.width {
@@ -254,6 +312,12 @@ impl Game {
             println!("");
         }
     }
+
+    pub fn print_cards_of_current_player(& self) {
+        let p = self.current_player_id;
+        self.print_cards_of_player(p);
+    }
+
     pub fn print_cards_of_player(& self, player_id : usize) {
         println!("Player {} has {} cards:", self.players[player_id].name, self.players[player_id].collected_cards.len());
         let col_cards = &self.players[player_id].collected_cards;
@@ -262,6 +326,7 @@ impl Game {
             print!("(id: {} type: {} str: {}), ", card.id, card.card_type, card.title);
         }
     }
+
 }
 
 #[cfg(test)]

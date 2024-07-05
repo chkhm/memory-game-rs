@@ -9,49 +9,40 @@ use sdl2::pixels::Color;
 use sdl2::event::Event;
 // use sdl2::video::WindowBuilder;
 
-#[derive(PartialEq)]
-pub enum ControlState {
-    StartGame,
-    FirstCard,
-    SecondCard,
-    ViewResult,
-    NextUser,
-    GameOver,
-}
-
 pub struct Control {
-    pub state : ControlState,
     pub game : Game,
 }
 
 impl Control {
     pub fn new(height : usize, width : usize) -> Control {
         Control {
-            state : ControlState::StartGame,
             game : Game::new(height, width),
         }
     }
 
     pub fn reset(&mut self) {
-        self.state = ControlState::StartGame;
         self.game.reset();
     }
     
     fn handle_mouse_click(&mut self, y : i32, x : i32, screen_height : u32, screen_width : u32) {
-        if self.state == ControlState::StartGame {
-            self.state = ControlState::FirstCard;
+        if self.game.state == GameState::StartGame {
+            self.state = GameState::FirstCard;
             println!("first user, your first move");
             return;
         }
-        if self.state == ControlState::ViewResult {
-            self.state = ControlState::NextUser;
-            self.game.check_guess(player, coord1, coord2);
+        if self.state == GameState::ViewResult {
+            self.state = GameState::NextUser;
+            let found_pair = self.game.check_guess_current_player();
+            if found_pair {
+                println!("Found a pair, you now have cards");
+                self.game.print_cards_of_current_player();
+            }
             self.game.close_selected_cards();
             println!("Next user, click anywhere to continue");
             return;
         }
-        if self.state == ControlState::NextUser {
-            self.state = ControlState::FirstCard;
+        if self.state == GameState::NextUser {
+            self.state = GameState::FirstCard;
             println!("Next user, make your first move");
             return;
         }
@@ -72,11 +63,11 @@ impl Control {
             let card_opened = self.game.open_card(&coord);
             if card_opened {
                 println!("Card Opened at ({}, {})", coord.0, coord.1);
-                if self.state == ControlState::FirstCard {
-                    self.state = ControlState::SecondCard;
+                if self.state == GameState::FirstCard {
+                    self.state = GameState::SecondCard;
                     println!("Choose second card");
-                } else if self.state == ControlState::SecondCard {
-                    self.state = ControlState::ViewResult;
+                } else if self.state == GameState::SecondCard {
+                    self.state = GameState::ViewResult;
                     println!("Check you result");
                 }
             }
