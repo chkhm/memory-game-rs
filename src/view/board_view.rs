@@ -7,11 +7,12 @@ use sdl2::video::Window;
 use crate::model::game_model::Coord;
 use crate::model::game_model::{Game, Card, GameState};
 
-
 pub struct Renderer {
-    pub screen_area: Rect,
+    pub window_height : u32,
+    pub window_width : u32,
+    pub statusbar_area : Rect,
+    pub screen_area : Rect,
     pub clear_color : Color,
-
 }
 
 // handle the annoying Rect i32

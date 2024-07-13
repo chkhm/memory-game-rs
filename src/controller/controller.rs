@@ -133,8 +133,11 @@ impl Control {
     }
 
     pub fn run(&mut self) {
-        let screen_width : u32 = 600;
+        let window_height : u32 = 840;
+        let window_width : u32 = 600;
         let screen_height: u32 = 800;
+        let screen_width : u32 = 600;
+        let status_bar = Rect::new(0, (window_height-40).try_into().unwrap(), window_width, 40);
     
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
@@ -149,6 +152,9 @@ impl Control {
             .unwrap();
     
         let board_view = board_view::Renderer {
+            window_height,
+            window_width,
+            statusbar_area : status_bar,
             screen_area : Rect::new(0, 0, screen_width, screen_height),
             clear_color : Color::RGB(64, 192, 255),
         };

@@ -23,6 +23,7 @@ fn parse_and_check_bounds(s : &str, lower : usize, upper : usize) -> (bool, usiz
     } else {
         let rslt = (false, val);
         return rslt
+  
     }
 }
 
