@@ -13,18 +13,19 @@ pub struct Control {
     pub game : Game,
 }
 
-fn calculate_card_coord_from_mouse_click(y : i32, x : i32, screen_height : u32, screen_width : u32) -> Option<Coord> {
-    let padding: i32  = 5;
+fn calculate_card_coord_from_mouse_click(y : i32, x : i32, screen_left : i32, screen_top : i32, screen_height : u32, screen_width : u32) -> Option<Coord> {
+    let padding_left: i32  = 5 + screen_left;
+    let padding_top : i32 = 5 + screen_top;
     let screen_height_i32: i32 = screen_height.try_into().unwrap();
     let screen_width_i32: i32 = screen_width.try_into().unwrap();
-    let y_max : i32 = screen_height_i32 - padding;
-    let x_max : i32 = screen_width_i32 - padding;
+    let y_max : i32 = screen_height_i32 - 5 + screen_top;
+    let x_max : i32 = screen_width_i32 - 5 + screen_left;
 
-    if y > padding || y < y_max || x > padding || x < x_max {
+    if y > padding_top || y < y_max || x > padding_left || x < x_max {
         let card_width_plus_padding : u32 = screen_width / 8;
         let card_height_plus_padding : u32 = screen_height / 8;
-        let x_minus_padding : u32 = (x - padding).try_into().unwrap();
-        let y_minus_padding : u32 = (y - padding).try_into().unwrap();
+        let x_minus_padding : u32 = (x - padding_left).try_into().unwrap();
+        let y_minus_padding : u32 = (y - padding_top).try_into().unwrap();
         let col : u32 = (x_minus_padding) / card_width_plus_padding;
         let row : u32 = (y_minus_padding) / card_height_plus_padding;
         let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
@@ -133,15 +134,15 @@ impl Control {
     }
 
     pub fn run(&mut self) {
-        let window_height : u32 = 840;
-        let window_width : u32 = 600;
+        let window_height : u32 = 1000;
+        let window_width : u32 = 1600;
         let screen_height: u32 = 800;
         let screen_width : u32 = 600;
         let status_bar = Rect::new(0, (window_height-40).try_into().unwrap(), window_width, 40);
     
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window("Rusty!", screen_width, screen_height)
+        let window = video_subsystem.window("Play Memory!", window_width, window_height)
             .build()
             .unwrap();
     
@@ -155,7 +156,7 @@ impl Control {
             window_height,
             window_width,
             statusbar_area : status_bar,
-            screen_area : Rect::new(0, 0, screen_width, screen_height),
+            screen_area : Rect::new(200, 100, screen_width, screen_height),
             clear_color : Color::RGB(64, 192, 255),
         };
     

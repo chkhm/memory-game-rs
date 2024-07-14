@@ -116,8 +116,10 @@ impl Renderer {
                 let card = game.card_at(row.try_into().unwrap(), col.try_into().unwrap());
                 match card {
                     Some(c) => {
-                        let x: i32 = (padding+col*(card_width + padding)).try_into().unwrap();
-                        let y: i32= (padding+row*(card_height+padding)).try_into().unwrap();
+                        let x_offset:u32 = self.screen_area.left().try_into().unwrap();
+                        let y_offset:u32 = self.screen_area.top().try_into().unwrap();
+                        let x: i32 = (x_offset+padding+col*(card_width + padding)).try_into().unwrap();
+                        let y: i32= (y_offset+padding+row*(card_height+padding)).try_into().unwrap();
                         let r = Rect::new(x, y, card_width, card_height);
                         canvas.draw_rect(r).expect("Error on Drawing Rectangle on canvas");
                         let coord = Coord(row.try_into().unwrap(), col.try_into().unwrap());
