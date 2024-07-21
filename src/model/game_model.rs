@@ -121,6 +121,7 @@ impl Field {
 /// reset() --> state = StartGame
 pub struct Game {
     pub state : GameState,
+    pub rounds_counter : u32,
     pub field : Field,
     pub players : Vec<Player>,
     pub deck : Deck,
@@ -156,6 +157,7 @@ impl Game {
     pub fn new(height : usize, width : usize) -> Self {
         Self {
             state : GameState::GameOver,
+            rounds_counter : 0,
             field : Field::new(height, width),
             players : Vec::new(),
             deck : create_deck((height * width) / 2),

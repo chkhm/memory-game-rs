@@ -47,7 +47,7 @@ impl Control {
         self.game.reset();
     }
     
-    fn handle_mouse_click(&mut self, y : i32, x : i32, screen_height : u32, screen_width : u32) {
+    fn handle_mouse_click(&mut self, y : i32, x : i32, screen_left : i32, screen_top : i32, screen_height : u32, screen_width : u32) {
         let state = self.game.game_state();
 
         if state == GameState::GameOver {
@@ -61,7 +61,7 @@ impl Control {
 
         if state == GameState::StartSelectCards || state == GameState::StartGame {
             let p = self.game.current_player();
-            let c = calculate_card_coord_from_mouse_click(y, x, screen_height, screen_width);
+            let c = calculate_card_coord_from_mouse_click(y, x, screen_left, screen_top, screen_height, screen_width);
             if c.is_none() {
                 println!("Player {}, select your first card", p.name);
                 return;
@@ -80,7 +80,7 @@ impl Control {
 
         if state == GameState::FirstCard {
             let p = self.game.current_player();
-            let c = calculate_card_coord_from_mouse_click(y, x, screen_height, screen_width);
+            let c = calculate_card_coord_from_mouse_click(y, x, screen_left, screen_top, screen_height, screen_width);
             if c.is_none() {
                 println!("Player {}, select your second card", p.name);
                 return;
@@ -160,6 +160,9 @@ impl Control {
             clear_color : Color::RGB(64, 192, 255),
         };
     
+        let screen_left = board_view.screen_area.x;
+        let screen_top = board_view.screen_area.y;
+
         let mut running = true;
         let mut event_queue = sdl_context.event_pump().unwrap();
     
@@ -172,7 +175,7 @@ impl Control {
                     // },
                     Event::MouseButtonDown { timestamp: _, window_id, which: _, mouse_btn, clicks: _, x, y } => {
                         if window_id == game_window_id && mouse_btn == MouseButton::Left {
-                            self.handle_mouse_click(y, x, screen_height, screen_width);
+                            self.handle_mouse_click(y, x, screen_left, screen_top, screen_height, screen_width);
                         }
                     }
                     _ => {}

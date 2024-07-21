@@ -2,6 +2,8 @@ use sdl2::rect::Rect;
 use sdl2::pixels::Color;
 use sdl2::render::Canvas;
 use sdl2::render::TextureQuery;
+use sdl2::render::Texture;
+use sdl2::surface::Surface;
 use sdl2::video::Window;
 
 use crate::model::game_model::Coord;
@@ -50,13 +52,52 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
     rect!(cx, cy, w, h)
 }
 
-fn render_status_box(canvas : &mut Canvas<Window>, y : i32, x : i32, height : u32, width : u32, game : & Game, game_state : GameState) {
-
-}
-
-
 
 impl Renderer {
+
+    fn surface_from_text(&self, text : &str) -> Surface {
+        let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
+        let font_path = "./python/fonts/OpenSans-Bold.ttf";
+
+        // Load a font
+        let mut font = ttf_context.load_font(font_path, 24).unwrap();
+        font.set_style(sdl2::ttf::FontStyle::BOLD);
+        //let txt = (row*8+col+1).to_string();
+        let txt = text.clone();
+        // render a surface, and convert it to a texture bound to the canvas
+        let surface = font
+            .render(&txt)
+            .blended(Color::RGBA(255, 0, 0, 255))
+            .map_err(|e| e.to_string()).unwrap();
+        surface
+    }
+
+    /// Function renders the status bar. The status bar shows the points of the top five players. It also shows the current player,
+    /// and the round number.
+    /// 
+    fn render_status_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
+        // render current player
+
+        let txt = format!("Current Player: {} has {} cards", game.current_player().name, game.current_player().collected_cards.len());
+        let surface = self.surface_from_text(&txt);
+        let texture_creator = canvas.texture_creator();
+        let texture = texture_creator
+        .create_texture_from_surface(&surface)
+        .map_err(|e| e.to_string()).unwrap();
+
+        let TextureQuery { width, height, .. } = texture.query();
+
+        let mut dst = get_centered_rect(
+            width,
+            height,
+            self.statusbar_area.width(),
+            self.statusbar_area.height(),
+        );
+        dst.x += self.statusbar_area.left();
+        dst.y += self.statusbar_area.top();
+        canvas.copy(&texture, None, dst).unwrap();
+    }
+    
     fn render_card(&self, canvas : &mut Canvas<Window>, card : &Card, y : i32, x : i32, card_height : u32 , card_width : u32) {
         let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
         let font_path = "./python/fonts/OpenSans-Bold.ttf";
@@ -131,5 +172,6 @@ impl Renderer {
                 } // match
             } // for col
         } // for row
+        self.render_status_box(canvas, game);
     }
 }
