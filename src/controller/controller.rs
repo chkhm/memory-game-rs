@@ -91,10 +91,11 @@ impl Control {
                 println!("Card Opened at ({}, {})", c.0, c.1);
                 println!("Player {}, check the result", p.name);
                 return;
+            } else {
+                println!("No card opened.");
+                println!("Player {}, select your second card", p.name);
+                return ;
             }
-            println!("No card opened.");
-            println!("Player {}, select your second card", p.name);
-            return ;
         }
 
         if state == GameState::SecondCard {
@@ -110,7 +111,21 @@ impl Control {
             return;
         }
 
-        if state == GameState::ViewResult {
+        // if state == GameState::ViewResult {
+        //     let p = self.game.current_player();
+        //     let game_over = self.game.check_game_over(); // result is now either GameOver or NextUser
+        //     if game_over {
+        //         println!("Player {}, Game is over. Press any key to start new game.", p.name);
+        //     } else {
+        //         self.game.close_selected_cards();
+        //         self.game.next_player();
+        //         let p = self.game.current_player();
+        //         println!("Player {}, your turn!", p.name);
+        //     }
+        //     return ;
+        // }
+
+        if state == GameState::NextUser {
             let p = self.game.current_player();
             let game_over = self.game.check_game_over(); // result is now either GameOver or NextUser
             if game_over {
@@ -121,14 +136,10 @@ impl Control {
                 let p = self.game.current_player();
                 println!("Player {}, your turn!", p.name);
             }
-            return ;
-        }
-
-        if state == GameState::NextUser {
-            println!("Warning! We should never reach this state!");
-            self.game.next_player();
-            let p = self.game.current_player();
-            println!("Player {}, click to start your selection", p.name);
+        
+            //self.game.next_player();
+            //let p = self.game.current_player();
+            //println!("Player {}, click to start your selection", p.name);
             return ;
         }
     }

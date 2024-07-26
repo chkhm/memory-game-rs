@@ -121,6 +121,7 @@ impl Field {
 /// reset() --> state = StartGame
 pub struct Game {
     pub state : GameState,
+    pub last_guess_success : bool,
     pub rounds_counter : u32,
     pub field : Field,
     pub players : Vec<Player>,
@@ -148,7 +149,7 @@ pub enum GameState {
     StartSelectCards,
     FirstCard,
     SecondCard,
-    ViewResult,
+    // ViewResult,
     NextUser,
     GameOver,
 }
@@ -157,6 +158,7 @@ impl Game {
     pub fn new(height : usize, width : usize) -> Self {
         Self {
             state : GameState::GameOver,
+            last_guess_success : false,
             rounds_counter : 0,
             field : Field::new(height, width),
             players : Vec::new(),
@@ -172,6 +174,14 @@ impl Game {
         self.state.clone()
     }
 
+    pub fn last_guess_success(& self) -> bool {
+        self.last_guess_success
+    }
+
+    pub fn round(& self) -> u32 {
+        self.rounds_counter
+    }
+
     pub fn add_player(&mut self, name : String) {
         let p = Player {
             name,
@@ -185,6 +195,7 @@ impl Game {
     }
 
     pub fn reset(&mut self) {
+        self.rounds_counter = 1;
         self.state = GameState::StartGame;
         self.field.clear_field();
         self.field.place_deck(&self.deck);
@@ -265,7 +276,9 @@ impl Game {
             return false;
         }
 
-        self.state = GameState::ViewResult;
+        // self.state = GameState::ViewResult;
+        self.state = GameState::NextUser;
+        // self.state = GameState::StartSelectCards;
 
         let card_id1 = self.field.field[coord1.0][coord1.1].unwrap();
         let card_id2 = self.field.field[coord2.0][coord2.1].unwrap();
@@ -277,8 +290,10 @@ impl Game {
 
             self.field.field[coord1.0][coord1.1] = None;
             self.field.field[coord2.0][coord2.1] = None;
-           return true;
+            self.last_guess_success = true;
+            return true;
         }
+        self.last_guess_success = false;
         false
     }
 
@@ -290,6 +305,7 @@ impl Game {
             for col in 0..self.field.width {
                 if self.field.field[row][col] != None {
                     self.state = GameState::NextUser;
+                    // self.state = GameState::StartSelectCards;
                     return false;
                 }
             }
@@ -303,6 +319,7 @@ impl Game {
         self.current_player_id += 1;
         if self.current_player_id >= self.players.len() {
             self.current_player_id = 0;
+            self.rounds_counter += 1;
         }
     }
 
@@ -336,7 +353,8 @@ impl Game {
     }
 
     pub fn print_cards_of_player(& self, player_id : usize) {
-        println!("Player {} has {} cards:", self.players[player_id].name, self.players[player_id].collected_cards.len());
+        println!("Round {} Player {} has {} cards:", 
+            self.rounds_counter , self.players[player_id].name, self.players[player_id].collected_cards.len());
         let col_cards = &self.players[player_id].collected_cards;
         for card_id in col_cards {
             let card = &self.deck[*card_id];

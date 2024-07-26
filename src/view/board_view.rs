@@ -72,13 +72,29 @@ impl Renderer {
         surface
     }
 
+    fn format_status(& self, state : & GameState) -> &str {
+        match state {
+            GameState::StartGame => { "select first card" },
+            GameState::StartSelectCards => { "select first card" },
+            GameState::FirstCard => { "select second card" },
+            GameState::SecondCard => { "SecondCard" },
+            // GameState::ViewResult=> { "ViewResult" },
+            GameState::NextUser => { "NextUser" },
+            GameState::GameOver => { "GameOver" },
+        }
+    }
+
     /// Function renders the status bar. The status bar shows the points of the top five players. It also shows the current player,
     /// and the round number.
     /// 
     fn render_status_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
         // render current player
+        canvas.set_draw_color(self.clear_color);
+        canvas.fill_rect(self.statusbar_area).ok().unwrap_or_default();
 
-        let txt = format!("Current Player: {} has {} cards", game.current_player().name, game.current_player().collected_cards.len());
+        let txt = format!("Round: {} - Current Player: {} has {} cards - {}", 
+            game.round(), game.current_player().name, game.current_player().collected_cards.len(), 
+            self.format_status(&game.game_state()));
         let surface = self.surface_from_text(&txt);
         let texture_creator = canvas.texture_creator();
         let texture = texture_creator
@@ -135,6 +151,34 @@ impl Renderer {
         canvas.copy(&texture, None, Some(target)).unwrap();
     }
 
+
+    fn render_check_result_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
+        let mut txt = "Not a pair, bad luck.";
+
+        if game.last_guess_success() {
+            txt = "You found a pair!";
+        }
+
+        let surface = self.surface_from_text(&txt);
+        let texture_creator = canvas.texture_creator();
+        let texture = texture_creator
+        .create_texture_from_surface(&surface)
+        .map_err(|e| e.to_string()).unwrap();
+
+        let TextureQuery { width, height, .. } = texture.query();
+
+        let mut dst = get_centered_rect(
+            width,
+            height,
+            self.statusbar_area.width() - (2*width),
+            self.statusbar_area.height()-10,
+        );
+        dst.x += 0;
+        dst.y += 400;
+        canvas.copy(&texture, None, dst).unwrap();
+    }
+
+
     /// renders the cardboard to the screen.
     /// it iterates over each row and col.
     /// If a coordinate is empty (card already taken) it shows an empty area (no rectangle drawn).
@@ -173,5 +217,8 @@ impl Renderer {
             } // for col
         } // for row
         self.render_status_box(canvas, game);
+        if game.game_state() == GameState::NextUser {
+            self.render_check_result_box(canvas, game);
+        }
     }
 }
