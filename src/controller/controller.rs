@@ -53,7 +53,6 @@ impl Control {
         if state == GameState::GameOver {
             print!("Game over. Resetting ... ");
             self.game.reset(); // state == StartSelectCards
-            println!("done.");
             let p = self.game.current_player();
             println!("Player {}, select your first card", p.name);
             return;

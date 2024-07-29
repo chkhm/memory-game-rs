@@ -80,7 +80,7 @@ impl Renderer {
             GameState::SecondCard => { "SecondCard" },
             // GameState::ViewResult=> { "ViewResult" },
             GameState::NextUser => { "NextUser" },
-            GameState::GameOver => { "GameOver" },
+            GameState::GameOver => { "Game Over!" },
         }
     }
 

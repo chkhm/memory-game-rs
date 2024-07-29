@@ -6,12 +6,28 @@ use std::fmt;
 
 pub type CardId = usize;
 
+/// Info about the player.
+/// 
 #[derive(Clone)]
 pub struct Player {
     pub name : String,
     pub collected_cards : Vec<CardId>,
 }
 
+impl Player {
+    pub fn new(name : String) -> Self {
+        Player {
+            name,
+            collected_cards : Vec::new(),
+        }
+    }
+}
+
+/// Ifo about a card.
+/// Each card has a unique id which is a number from 0 to length of card deck. 
+/// The card_type should exist as a pair on the card deck. Same with the title.
+/// There should be pairs.
+/// 
 #[derive(Debug)]
 pub struct Card {
     pub id : CardId,
@@ -19,9 +35,13 @@ pub struct Card {
     pub title : String,
 }
 
+/// Represents a deck of cards
 pub type Deck = Vec<Card>;
+
+/// Represents a random shuffle of the card IDs of the deck
 pub type Shuffle = Vec<CardId>;
 
+/// This creates a sorted deck of cards with the given number of pairs.
 pub fn create_deck(num_pairs : usize) -> Deck {
     let mut deck = Vec::with_capacity(num_pairs*2);
 
@@ -40,15 +60,23 @@ pub fn create_deck(num_pairs : usize) -> Deck {
     deck
 }
 
+/// This creates a shuffle of the card deck (i.e. a vector witht he ids of the card deck in random order)
 pub fn shuffle_deck(deck : &Deck) -> Shuffle {
     let mut deck_shuffle : Vec<usize> = (0..deck.len()).collect();
     deck_shuffle.shuffle(&mut thread_rng());
     deck_shuffle
 }
 
+/// This is the information stored in a field. It is an Option of CardId.
 pub type FieldSlot = Option<CardId>;
+/// This is a row in the field
 pub type FieldRow  = Vec<FieldSlot>;
 
+/// The field represents a deck of cards layed out in a rectangular shape. The cards are layed out according
+/// to the shuffle. Note that each position in the field holds the index of a card in the deck. We don't use
+/// pointers because this requires either smart pointers or very complicated timeline annotations.
+/// Not sure if this is the best way to do it (the relationship between card and field is not obvious anymore),
+/// but it allows to avoid smart pointers or timelines.
 pub struct Field {
     pub height : usize,
     pub width : usize,
@@ -183,10 +211,7 @@ impl Game {
     }
 
     pub fn add_player(&mut self, name : String) {
-        let p = Player {
-            name,
-            collected_cards : Vec::new(),
-        };
+        let p = Player::new(name);
         self.players.push(p);
     }
 
