@@ -9,6 +9,11 @@ use sdl2::video::Window;
 use crate::model::game_model::Coord;
 use crate::model::game_model::{Game, Card, GameState};
 
+// -----------------------------------------------------------------------------------------------
+/// 
+/// The Renderer class. Holds all data and functionality to render the view on the SDL2 Canvas
+/// 
+// -----------------------------------------------------------------------------------------------
 pub struct Renderer {
     pub window_height : u32,
     pub window_width : u32,
@@ -17,14 +22,21 @@ pub struct Renderer {
     pub clear_color : Color,
 }
 
-// handle the annoying Rect i32
+/// handle the annoying Rect i32 casting need
 macro_rules! rect(
     ($x:expr, $y:expr, $w:expr, $h:expr) => (
         Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
     )
 );
 
-
+/// This function creates a rectangle of given dimensions as a SDL2::Rect that is centered within 
+/// a constraining rectangle.
+/// 
+/// Returns a Rect with dimension: 
+///  - (rect_width, rect_height) 
+/// that is centered inside 
+/// - (cons_width, cons_height)
+/// If the rectangle does not fit inside the constraining rectangle it is scaled down.
 fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_height: u32) -> Rect {
     let wr = rect_width as f32 / cons_width as f32;
     let hr = rect_height as f32 / cons_height as f32;
@@ -53,8 +65,14 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
 }
 
 
+// -----------------------------------------------------------------------------------------------
+/// Implementation of the Renderer.
+/// The main public API function is render(). It renders the view on a SDL2 Canvas based on the 
+/// state of the game.
+// -----------------------------------------------------------------------------------------------
 impl Renderer {
 
+    /// Creates a SDL2 Surface from a given text which can be used to create a Texture.
     fn surface_from_text(&self, text : &str) -> Surface {
         let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
         let font_path = "./python/fonts/OpenSans-Bold.ttf";
@@ -72,8 +90,10 @@ impl Renderer {
         surface
     }
 
+    /// Return a string representation of the given GameState
     fn format_status(& self, state : & GameState) -> &str {
         match state {
+            GameState::GameSetup => { "Enter player name" },
             GameState::StartGame => { "select first card" },
             GameState::StartSelectCards => { "select first card" },
             GameState::FirstCard => { "select second card" },
@@ -114,6 +134,7 @@ impl Renderer {
         canvas.copy(&texture, None, dst).unwrap();
     }
     
+    /// Function renders a single card at given position and dimension on the Canvas
     fn render_card(&self, canvas : &mut Canvas<Window>, card : &Card, y : i32, x : i32, card_height : u32 , card_width : u32) {
         let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
         let font_path = "./python/fonts/OpenSans-Bold.ttf";
@@ -152,6 +173,9 @@ impl Renderer {
     }
 
 
+    /// Function renders a text on the canvas right across the cards. The text is a
+    /// success message if the player opened to matching cards or otherwise a fail 
+    /// message.
     fn render_check_result_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
         let mut txt = "Not a pair, bad luck.";
 

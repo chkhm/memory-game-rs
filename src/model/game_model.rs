@@ -173,6 +173,7 @@ impl fmt::Display for Coord {
 
 #[derive(PartialEq, Clone)]
 pub enum GameState {
+    GameSetup,
     StartGame,
     StartSelectCards,
     FirstCard,
