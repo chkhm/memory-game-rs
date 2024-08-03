@@ -64,6 +64,11 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
     rect!(cx, cy, w, h)
 }
 
+struct TextRenderData<'a> {
+    text : &'a str,
+    font_path : &'a str,
+    font_style : sdl2::ttf::FontStyle,
+}
 
 // -----------------------------------------------------------------------------------------------
 /// Implementation of the Renderer.
@@ -71,17 +76,15 @@ fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_he
 /// state of the game.
 // -----------------------------------------------------------------------------------------------
 impl Renderer {
-
     /// Creates a SDL2 Surface from a given text which can be used to create a Texture.
-    fn surface_from_text(&self, text : &str) -> Surface {
+    fn surface_from_text(&self, text_render_data : &TextRenderData) -> Surface {
         let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
-        let font_path = "./python/fonts/OpenSans-Bold.ttf";
 
         // Load a font
-        let mut font = ttf_context.load_font(font_path, 24).unwrap();
-        font.set_style(sdl2::ttf::FontStyle::BOLD);
+        let mut font = ttf_context.load_font(text_render_data.font_path, 24).unwrap();
+        font.set_style(text_render_data.font_style);
         //let txt = (row*8+col+1).to_string();
-        let txt = text.clone();
+        let txt = text_render_data.text;
         // render a surface, and convert it to a texture bound to the canvas
         let surface = font
             .render(&txt)
@@ -104,18 +107,14 @@ impl Renderer {
         }
     }
 
-    /// Function renders the status bar. The status bar shows the points of the top five players. It also shows the current player,
-    /// and the round number.
-    /// 
-    fn render_status_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
-        // render current player
-        canvas.set_draw_color(self.clear_color);
-        canvas.fill_rect(self.statusbar_area).ok().unwrap_or_default();
+    fn render_text(& self, canvas : &mut Canvas<Window>, rect : &Rect, text_render_data : &TextRenderData, clear_box : bool) {
+        if clear_box {
+            canvas.set_draw_color(self.clear_color);
+            canvas.fill_rect(*rect).ok().unwrap_or_default();
+        }
 
-        let txt = format!("Round: {} - Current Player: {} has {} cards - {}", 
-            game.round(), game.current_player().name, game.current_player().collected_cards.len(), 
-            self.format_status(&game.game_state()));
-        let surface = self.surface_from_text(&txt);
+        let surface = self.surface_from_text(text_render_data);
+
         let texture_creator = canvas.texture_creator();
         let texture = texture_creator
         .create_texture_from_surface(&surface)
@@ -126,50 +125,57 @@ impl Renderer {
         let mut dst = get_centered_rect(
             width,
             height,
-            self.statusbar_area.width(),
-            self.statusbar_area.height(),
+            rect.width(),
+            rect.height(),
         );
-        dst.x += self.statusbar_area.left();
-        dst.y += self.statusbar_area.top();
+        dst.x += rect.left();
+        dst.y += rect.top();
         canvas.copy(&texture, None, dst).unwrap();
+    }
+
+    /// Function renders an interactive box on the screen where a user can enter the name
+    fn render_signup_box(& self, game : & Game) {
+        
+    }
+
+    /// Function renders the status bar. The status bar shows the points of the top five players. It also shows the current player,
+    /// and the round number.
+    /// 
+    fn render_status_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
+        let text = format!("Round: {} - Current Player: {} has {} cards - {}", 
+            game.round(), game.current_player().name, game.current_player().collected_cards.len(), 
+            self.format_status(&game.game_state()));
+        let font_path = "./python/fonts/OpenSans-Bold.ttf";
+        let font_style = sdl2::ttf::FontStyle::BOLD;
+
+        let text_render_data = TextRenderData {
+            text : text.as_str(),
+            font_path,
+            font_style,
+        };
+
+        let rect = rect!(
+            self.statusbar_area.left(), 
+            self.statusbar_area.top(), 
+            self.statusbar_area.width(), 
+            self.statusbar_area.height());
+        self.render_text(canvas, &rect, &text_render_data, true);
     }
     
     /// Function renders a single card at given position and dimension on the Canvas
     fn render_card(&self, canvas : &mut Canvas<Window>, card : &Card, y : i32, x : i32, card_height : u32 , card_width : u32) {
-        let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
+        let text = card.title.as_str();
         let font_path = "./python/fonts/OpenSans-Bold.ttf";
+        let font_style = sdl2::ttf::FontStyle::BOLD;
 
-        let texture_creator = canvas.texture_creator();
-        // Load a font
-        let mut font = ttf_context.load_font(font_path, 24).unwrap();
-        font.set_style(sdl2::ttf::FontStyle::BOLD);
-        //let txt = (row*8+col+1).to_string();
-        let txt = card.title.as_str();
-        // render a surface, and convert it to a texture bound to the canvas
-        let surface = font
-            .render(&txt)
-            .blended(Color::RGBA(255, 0, 0, 255))
-            .map_err(|e| e.to_string()).unwrap();
-        let texture = texture_creator
-            .create_texture_from_surface(&surface)
-            .map_err(|e| e.to_string()).unwrap();
+        let text_render_data = TextRenderData {
+            text,
+            font_path,
+            font_style,
+        };
 
-        // canvas.set_draw_color(Color::RGBA(195, 217, 255, 255));
-        // canvas.clear();
-
-        let TextureQuery { width, height, .. } = texture.query();
-
-        // If the example text is too big for the screen, downscale it (and center irregardless)
-        // let padding = 64;
-        let mut target = get_centered_rect(
-            width,
-            height,
-            card_width,
-            card_height,
-        );
-        target.x += x;
-        target.y += y;
-        canvas.copy(&texture, None, Some(target)).unwrap();
+        let rect = rect!(x, y, card_width, card_height);
+        self.render_text(canvas, &rect, &text_render_data, false);
     }
 
 
@@ -177,29 +183,23 @@ impl Renderer {
     /// success message if the player opened to matching cards or otherwise a fail 
     /// message.
     fn render_check_result_box(&self, canvas : &mut Canvas<Window>, game : &Game) {
-        let mut txt = "Not a pair, bad luck.";
+        let mut text = "Not a pair, bad luck.";
 
         if game.last_guess_success() {
-            txt = "You found a pair!";
+            text = "You found a pair!";
         }
 
-        let surface = self.surface_from_text(&txt);
-        let texture_creator = canvas.texture_creator();
-        let texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string()).unwrap();
+        let font_path = "./python/fonts/OpenSans-Bold.ttf";
+        let font_style = sdl2::ttf::FontStyle::BOLD;
 
-        let TextureQuery { width, height, .. } = texture.query();
+        let text_render_data = TextRenderData {
+            text,
+            font_path,
+            font_style,
+        };
 
-        let mut dst = get_centered_rect(
-            width,
-            height,
-            self.statusbar_area.width() - (2*width),
-            self.statusbar_area.height()-10,
-        );
-        dst.x += 0;
-        dst.y += 400;
-        canvas.copy(&texture, None, dst).unwrap();
+        let rect = rect!(0, 400, (self.statusbar_area.width() * 3) / 5 , self.statusbar_area.height()-10);        
+        self.render_text(canvas, &rect, &text_render_data, false);
     }
 
 
